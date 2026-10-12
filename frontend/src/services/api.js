@@ -1,9 +1,11 @@
 // ⚡ Auto-detect API URL based on environment
+// Development (localhost) → local backend
+// Production (Vercel) → Railway backend
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV
     ? "http://127.0.0.1:5000/api"
-    : "https://classroom-monitoring-api.onrender.com/api");
+    : "https://classroom-monitoring-production.up.railway.app/api");
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem("cms_token");
@@ -38,6 +40,8 @@ export const apiRequest = async (endpoint, options = {}) => {
   } catch (error) {
     console.error(`❌ FETCH FAILED on ${endpoint}:`, error);
     console.error(`   URL was: ${fullUrl}`);
+    console.error(`   Error type: ${error.name}`);
+    console.error(`   Error message: ${error.message}`);
     throw error;
   }
 };
