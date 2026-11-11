@@ -16,6 +16,7 @@ import StudentClassrooms from "./pages/student/Classrooms";
 import StudentClassroomDetails from "./pages/student/ClassroomDetails";
 import StudentFloorMap from "./pages/student/FloorMap";
 import StudentNotifications from "./pages/student/Notifications";
+import StudentCameraMonitoring from "./pages/student/CameraMonitoring"; // ⚡ New Import
 
 // Teacher pages
 import TeacherLogin from "./pages/teacher/Login";
@@ -26,6 +27,7 @@ import TeacherClassroomDetails from "./pages/teacher/TeacherClassroomDetails";
 import TeacherFloorMap from "./pages/teacher/TeacherFloorMap";
 import MyRequests from "./pages/teacher/MyRequests";
 import RequestClassroom from "./pages/teacher/RequestClassroom";
+import TeacherCameraMonitoring from "./pages/teacher/CameraMonitoring"; // ⚡ New Import
 
 // Admin pages
 import AdminLogin from "./pages/admin/Login";
@@ -55,6 +57,7 @@ export default function App() {
       <Route path="/student/classroom/:id" element={<ProtectedRoute role="student"><StudentClassroomDetails /></ProtectedRoute>} />
       <Route path="/student/floor-map" element={<ProtectedRoute role="student"><StudentFloorMap /></ProtectedRoute>} />
       <Route path="/student/notifications" element={<ProtectedRoute role="student"><StudentNotifications /></ProtectedRoute>} />
+      <Route path="/student/cameras" element={<ProtectedRoute role="student"><StudentCameraMonitoring /></ProtectedRoute>} /> {/* ⚡ New Route */}
 
       {/* Teacher Routes */}
       <Route path="/teacher/login" element={<TeacherLogin />} />
@@ -65,6 +68,7 @@ export default function App() {
       <Route path="/teacher/floor-map" element={<ProtectedRoute role="teacher"><TeacherFloorMap /></ProtectedRoute>} />
       <Route path="/teacher/my-requests" element={<ProtectedRoute role="teacher"><MyRequests /></ProtectedRoute>} />
       <Route path="/teacher/request-classroom" element={<ProtectedRoute role="teacher"><RequestClassroom /></ProtectedRoute>} />
+      <Route path="/teacher/cameras" element={<ProtectedRoute role="teacher"><TeacherCameraMonitoring /></ProtectedRoute>} /> {/* ⚡ New Route */}
 
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />

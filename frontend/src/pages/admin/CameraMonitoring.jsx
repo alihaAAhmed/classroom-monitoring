@@ -1,46 +1,44 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  Camera, Search, RefreshCw, Video, VideoOff,
-  AlertCircle, Eye, Clock, Users, Maximize2,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Camera, AlertCircle, Users, CheckCircle2, VideoOff, Power, RefreshCw } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import LogoutModal from "../../components/LogoutModal";
 import { useAuth } from "../../context/AuthContext";
-import { rooms } from "../../data/rooms";
-import { getStatusInfo } from "../../utils/helpers";
+import { apiRequest } from "../../services/api";
 
 export default function CameraMonitoring() {
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [filter, setFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const { logout } = useAuth();
 
-  const onlineCameras = rooms.filter((r) => r.cameraOnline).length;
-  const offlineCameras = rooms.filter((r) => !r.cameraOnline).length;
-  const occupiedRooms = rooms.filter(
-    (r) => r.status === "occupied" || r.status === "inuse"
-  ).length;
-  const totalOccupancy = rooms.reduce((sum, r) => sum + r.occupancy, 0);
+  const [isCameraStarted, setIsCameraStarted] = useState(false);
+  const [aiStatus, setAiStatus] = useState({ occupancy: 0, status: "available", cameraOnline: false });
 
-  const stats = [
-    { icon: Video, value: onlineCameras, label: "Cameras Online", sub: `Out of ${rooms.length} total`, color: "green" },
-    { icon: VideoOff, value: offlineCameras, label: "Cameras Offline", sub: offlineCameras > 0 ? "Need attention" : "All working", color: "red" },
-    { icon: AlertCircle, value: occupiedRooms, label: "Active Rooms", sub: "With people detected", color: "orange" },
-    { icon: Users, value: totalOccupancy, label: "Total People", sub: "Across all rooms", color: "blue" },
-  ];
+  // Jab camera start ho jaye, tabhi backend se live data fetch karo
+  useEffect(() => {
+    if (!isCameraStarted) return;
 
-  const filtered = rooms.filter((r) => {
-    if (filter !== "all" && r.status !== filter) return false;
-    if (
-      searchQuery &&
-      !r.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !r.cameraId.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-      return false;
-    return true;
-  });
+    const fetchData = async () => {
+      try {
+        const roomData = await apiRequest("/rooms");
+        const room101 = roomData.find(r => r.name === "Room 101");
+        if (room101) {
+          setAiStatus({
+            occupancy: room101.occupancy,
+            status: room101.status,
+            cameraOnline: room101.cameraOnline
+          });
+        }
+      } catch (err) {
+        console.log("Fetch error:", err);
+      }
+    };
+
+    fetchData(); 
+    const interval = setInterval(fetchData, 2000); // Har 2 second update
+    return () => clearInterval(interval);
+  }, [isCameraStarted]);
+
+  const isOccupied = aiStatus.occupancy > 0;
 
   return (
     <>
@@ -58,131 +56,126 @@ export default function CameraMonitoring() {
 
       <div className="page-header page-header-flex">
         <div>
-          <h1>Camera Monitoring</h1>
-          <p>Monitor all classroom cameras and view real-time occupancy.</p>
+          <h1>Live AI Camera</h1>
+          <p>Real-time room occupancy detection.</p>
         </div>
-        <button className="page-header-btn" onClick={() => window.location.reload()}>
-          <RefreshCw size={16} />
-          Refresh All
-        </button>
       </div>
 
       <div className="container admin-container">
-        <div className="stats-grid">
-          {stats.map((s, i) => (
-            <div key={i} className="stat-card">
-              <div className={`stat-icon ${s.color}`}>
-                <s.icon size={24} />
-              </div>
-              <div>
-                <div className="stat-val">{s.value}</div>
-                <div className="stat-lbl">{s.label}</div>
-                <div className="stat-sub">{s.sub}</div>
-              </div>
+        <div className="ai-detector-card" style={{ marginTop: 30, padding: "30px" }}>
+          
+          {/* Header */}
+          <div className="ai-header" style={{ marginBottom: "20px" }}>
+            <div className="ai-title" style={{ fontSize: "20px" }}>
+              <Camera size={24} className="ai-icon-pulse" />
+              <span>Camera Feed & Detection</span>
             </div>
-          ))}
-        </div>
-
-        {/* Filter bar */}
-        <div className="filter-bar">
-          <div className="filter-search">
-            <Search size={15} color="#94A3B8" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by room number or camera ID..."
-            />
+            
+            {/* Turn Off Button (Sirf tab dikhega jab camera on hoga) */}
+            {isCameraStarted && (
+              <button 
+                onClick={() => setIsCameraStarted(false)}
+                style={{
+                  background: "#DC2626", color: "#fff", border: "none",
+                  padding: "8px 16px", borderRadius: "8px", fontSize: "14px",
+                  fontWeight: "700", display: "flex", alignItems: "center", 
+                  gap: "6px", cursor: "pointer"
+                }}
+              >
+                <Power size={16} /> Turn Off Camera
+              </button>
+            )}
           </div>
 
-          {[
-            { id: "all", label: `All (${rooms.length})` },
-            { id: "available", label: `Available (${rooms.filter((r) => r.status === "available").length})` },
-            { id: "occupied", label: `Occupied (${rooms.filter((r) => r.status === "occupied").length})` },
-            { id: "inuse", label: `In Use (${rooms.filter((r) => r.status === "inuse").length})` },
-          ].map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`filter-tab ${filter === f.id ? "active" : ""}`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+          {/* 🟢 STATE 1: Jab tak camera start nahi hua */}
+          {!isCameraStarted ? (
+            <div style={{ textAlign: "center", padding: "80px 20px", background: "rgba(0,0,0,0.2)", borderRadius: "16px" }}>
+              <VideoOff size={64} style={{ opacity: 0.5, marginBottom: "20px", margin: "0 auto" }} />
+              <h3 style={{ fontSize: "24px", marginBottom: "10px", color: "#fff" }}>Camera is Offline</h3>
+              <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.7)", marginBottom: "30px" }}>
+                Click the button below to start the AI detection.
+              </p>
+              
+              <button 
+                onClick={() => setIsCameraStarted(true)}
+                style={{
+                  background: "#16A34A", color: "#fff", border: "none",
+                  padding: "16px 40px", borderRadius: "12px", fontSize: "18px",
+                  fontWeight: "800", display: "inline-flex", alignItems: "center", 
+                  gap: "10px", cursor: "pointer", boxShadow: "0 4px 15px rgba(22, 163, 74, 0.4)"
+                }}
+              >
+                <Power size={22} /> Turn On Camera
+              </button>
+            </div>
+          ) : (
+            
+            /* 🟢 STATE 2: Split Layout (Camera Left, Status Right) */
+            <div className="camera-split-layout">
+              
+              {/* Left: Camera Video Box */}
+              <div className="camera-video-wrapper">
+                <img 
+                  src="http://127.0.0.1:5001/video_feed" 
+                  alt="Live Camera Feed" 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.innerHTML = '<p style="color:#888; font-size:14px;">Connecting to camera feed... (Wait 5 seconds)</p>';
+                  }}
+                />
+              </div>
 
-        <div className="live-grid">
-          {filtered.map((room) => {
-            const status = getStatusInfo(room.status);
-            return (
-              <div key={room.id} className="live-card">
-                <div className="live-thumb">
-                  {room.cameraOnline && room.image ? (
-                    <>
-                      <img src={room.image} alt={room.name} />
-                      <div className={`live-badge ${status.color}`}>
-                        <span className="dot"></span>
-                        LIVE
-                      </div>
-                      <button className="fullscreen-btn" title="Fullscreen">
-                        <Maximize2 size={14} />
-                      </button>
-                    </>
+              {/* Right: Detection Status Card */}
+              <div className="camera-status-panel">
+                <div style={{ marginBottom: "20px" }}>
+                  {aiStatus.cameraOnline ? (
+                    <span className={`status-pill ${isOccupied ? 'red' : 'green'} big`} style={{ fontSize: "14px", padding: "6px 14px" }}>
+                      <span className="dot"></span>
+                      {isOccupied ? 'Occupied' : 'Available'}
+                    </span>
                   ) : (
-                    <div className="no-signal">
-                      <VideoOff size={40} />
-                      <div className="no-signal-title">No Signal</div>
-                    </div>
+                    <span className="status-pill gray big" style={{ fontSize: "14px", padding: "6px 14px" }}>
+                      <span className="dot"></span> Waiting for Data
+                    </span>
                   )}
-
-                  <div className="cam-id-tag">{room.cameraId}</div>
                 </div>
 
-                <div className="live-body">
-                  <div className="lb-title">
-                    {room.name} — {room.type}
-                  </div>
-                  <div className="lb-meta">
-                    {room.building} • {room.floor}
-                  </div>
+                <h3 style={{ fontSize: "28px", color: "#fff", marginBottom: "10px", lineHeight: "1.2" }}>
+                  {isOccupied ? "Room is Occupied" : "Room is Empty"}
+                </h3>
+                <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.7)", marginBottom: "30px" }}>
+                  {isOccupied ? "People detected in the room." : "No people detected. Room is available."}
+                </p>
 
-                  <div className="live-stats">
-                    <div className="live-stat">
-                      <Users size={13} />
-                      {room.occupancy}/{room.capacity} people
+                <div style={{ marginTop: "auto" }}>
+                  <div style={{ 
+                    background: "#fff", padding: "20px", borderRadius: "14px", 
+                    display: "flex", alignItems: "center", gap: "16px" 
+                  }}>
+                    {isOccupied ? (
+                      <Users size={40} color="#DC2626" />
+                    ) : (
+                      <CheckCircle2 size={40} color="#16A34A" />
+                    )}
+                    <div>
+                      <div style={{ fontSize: "32px", fontWeight: "800", color: isOccupied ? "#DC2626" : "#16A34A", lineHeight: "1" }}>
+                        {aiStatus.occupancy}
+                      </div>
+                      <div style={{ fontSize: "13px", fontWeight: "700", color: "#64748B", textTransform: "uppercase", marginTop: "4px" }}>
+                        People Detected
+                      </div>
                     </div>
-                    <div className="live-stat">
-                      <Clock size={13} />
-                      {room.lastUpdated}
-                    </div>
-                  </div>
-
-                  <div className="cam-footer">
-                    <span className={`status-pill ${status.color}`}>
-                      <span className="dot"></span>
-                      {status.label}
-                    </span>
-
-                    <Link to={`/admin/classrooms`} className="action-btn">
-                      <Eye size={13} />
-                      View Details
-                    </Link>
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        {filtered.length === 0 && (
-          <div className="table-empty table-empty-lg">
-            <Camera size={48} />
-            <div>No cameras match your filters.</div>
-          </div>
-        )}
+            </div>
+          )}
+
+        </div>
       </div>
 
       <Footer />
-
       <LogoutModal
         open={logoutOpen}
         onClose={() => setLogoutOpen(false)}

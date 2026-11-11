@@ -75,7 +75,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* LIVE CAMERA MONITORING */}
-        <div className="section-title-row">
+        <div className="section-title-row" style={{ marginTop: 30 }}>
           <div className="section-title">
             <Camera size={18} />
             Live Camera Monitoring

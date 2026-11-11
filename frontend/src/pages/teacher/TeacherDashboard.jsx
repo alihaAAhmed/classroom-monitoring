@@ -39,6 +39,7 @@ export default function TeacherDashboard() {
           { to: "/teacher/classrooms", label: "Classrooms" },
           { to: "/teacher/floor-map", label: "Floor Map" },
           { to: "/teacher/my-requests", label: "My Requests" },
+          { to: "/teacher/cameras", label: "Camera Monitoring" }, // ⚡ New Link
         ]}
       />
 

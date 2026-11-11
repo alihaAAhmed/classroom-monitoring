@@ -2159,6 +2159,7 @@ table tr:last-child { border-bottom: none !important; }
   .quick-actions-grid { grid-template-columns: repeat(3, 1fr); }
   .highlights-grid { grid-template-columns: 1fr; }
   .analytics-3col { grid-template-columns: 1fr; }
+  .live-camera-section { grid-template-columns: 1fr; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -2266,6 +2267,8 @@ table tr:last-child { border-bottom: none !important; }
   .request-detail-header { padding: 18px 20px; }
   .rq-id-badge { width: 48px; height: 48px; font-size: 11px; }
   .rq-room { font-size: 15px; }
+  .live-camera-section { grid-template-columns: 1fr; }
+  .live-camera-box { aspect-ratio: 4/3; }
 }
 
 /* Hide avatar-wrap and hamburger on desktop */
@@ -2530,4 +2533,293 @@ table tr:last-child { border-bottom: none !important; }
   .section-h2 { font-size: 20px; }
   .role-btn { font-size: 13.5px; }
   .stat-card { padding: 14px 16px; }
+}
+
+/* ═══════════════════════════════════════════════
+   36. LIVE AI DETECTOR & LIVE ROOM STATUS WIDGET
+   ═══════════════════════════════════════════════ */
+.ai-detector-card {
+  background: linear-gradient(135deg, #1E2A5A 0%, #2563EB 100%);
+  border-radius: 20px;
+  padding: 24px;
+  color: white;
+  margin-top: 30px;
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+  animation: pulse-glow 2s infinite alternate;
+}
+
+@keyframes pulse-glow {
+  from { box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2); }
+  to { box-shadow: 0 10px 40px rgba(37, 99, 235, 0.5); }
+}
+
+.ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ai-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.ai-icon-pulse {
+  color: #4ade80;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.4; }
+}
+
+.ai-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-status-badge.occupied { background: #FEE2E2; color: #DC2626; }
+.ai-status-badge.available { background: #DCFCE7; color: #16A34A; }
+
+.ai-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.ai-room-info h3 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.ai-room-info p { font-size: 13px; color: rgba(255, 255, 255, 0.7); }
+
+.ai-people-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 24px;
+  font-weight: 800;
+  background: white;
+  padding: 12px 24px;
+  border-radius: 14px;
+}
+
+.ai-people-count.text-red { color: #DC2626; }
+.ai-people-count.text-green { color: #16A34A; }
+
+.ai-footer {
+  margin-top: 16px;
+  text-align: right;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* --- Live Room Status Widget --- */
+.live-room-widget {
+  background: #fff;
+  border: 1px solid #EEF2F9;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  box-shadow: 0 4px 15px rgba(30,42,90,0.05);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.lrw-left { display: flex; align-items: center; gap: 16px; }
+.lrw-camera-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.lrw-camera-icon.occupied { background: #FEE2E2; color: #DC2626; }
+.lrw-camera-icon.available { background: #DCFCE7; color: #16A34A; }
+
+.lrw-live-dot {
+  position: absolute; top: 4px; right: 4px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: red; border: 2px solid #fff;
+  animation: live-blink 1s infinite;
+}
+@keyframes live-blink { 50% { opacity: 0.3; } }
+
+.lrw-left h4 { font-size: 15px; font-weight: 800; color: #1E2A5A; margin-bottom: 2px; }
+.lrw-sub { font-size: 11.5px; color: #64748B; display: flex; align-items: center; gap: 4px; }
+.pulse-icon { color: #3B82F6; animation: pulse 1s infinite alternate; }
+
+.lrw-right { display: flex; align-items: center; gap: 16px; }
+.lrw-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 800; text-transform: uppercase;
+}
+.lrw-badge.occupied { background: #FEE2E2; color: #DC2626; }
+.lrw-badge.available { background: #DCFCE7; color: #16A34A; }
+
+.lrw-people {
+  font-size: 14px; color: #475569; display: flex; align-items: center; gap: 6px;
+  background: #F8FAFC; padding: 8px 14px; border-radius: 10px;
+  border: 1px solid #E2E8F0;
+}
+.lrw-people strong { color: #1E2A5A; font-size: 16px; }
+
+/* ═══════════════════════════════════════════════
+   37. LIVE CAMERA PAGE
+   ═══════════════════════════════════════════════ */
+.live-camera-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-top: 30px;
+}
+
+.live-camera-box {
+  position: relative;
+  background: #1E2A5A;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  aspect-ratio: 16/9; /* YouTube style ratio */
+  border: 2px solid #2563EB;
+}
+
+.camera-feed-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.camera-status-badge {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+}
+
+.camera-status-badge.occupied { background: #DC2626; box-shadow: 0 0 15px rgba(220, 38, 38, 0.5); }
+.camera-status-badge.available { background: #16A34A; box-shadow: 0 0 15px rgba(22, 163, 74, 0.5); }
+.camera-status-badge .dot { width: 8px; height: 8px; background: white; border-radius: 50%; animation: blink 1s infinite; }
+
+.camera-info-panel {
+  background: #fff;
+  border-radius: 20px;
+  padding: 30px;
+  border: 1px solid #EEF2F9;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.camera-info-panel h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; color: #1E2A5A; }
+.camera-info-panel p { font-size: 14px; color: #64748B; margin-bottom: 24px; }
+
+.ai-stats-box { display: flex; flex-direction: column; gap: 16px; }
+.ai-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  color: white;
+}
+.ai-stat-card.occupied { background: linear-gradient(135deg, #DC2626, #EF4444); }
+.ai-stat-card.available { background: linear-gradient(135deg, #16A34A, #22C55E); }
+.ai-stat-card h3 { font-size: 24px; font-weight: 800; line-height: 1.2; }
+.ai-stat-card span { font-size: 12px; font-weight: 600; opacity: 0.9; text-transform: uppercase; }
+
+/* ═══════════════════════════════════════════════
+   38. RESPONSIVE FOR NEW WIDGETS (700px & 900px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .live-camera-section { grid-template-columns: 1fr; }
+  .live-camera-box { aspect-ratio: 4/3; }
+}
+
+@media (max-width: 700px) {
+  .ai-detector-card { padding: 16px; }
+  .ai-content { flex-direction: column; text-align: center; padding: 16px; }
+  .ai-people-count { font-size: 20px; padding: 10px 20px; }
+  
+  .live-room-widget { padding: 16px; flex-direction: column; align-items: stretch; text-align: center; }
+  .lrw-left { justify-content: center; flex-direction: column; }
+  .lrw-right { justify-content: center; }
+}
+
+/* ═══════════════════════════════════════════════
+   SPLIT CAMERA LAYOUT
+   ═══════════════════════════════════════════════ */
+.camera-split-layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr; /* Left bada, Right chota */
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.camera-video-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  background: #000;
+  height: 400px; /* Height fix kar di taake wide na lage */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.camera-video-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Video box mein fit ho jayegi */
+  display: block;
+}
+
+.camera-status-panel {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Mobile ke liye responsive (Ek ke neeche ek) */
+@media (max-width: 900px) {
+  .camera-split-layout {
+    grid-template-columns: 1fr;
+  }
+  .camera-video-wrapper {
+    height: 300px;
+  }
 }

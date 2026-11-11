@@ -40,6 +40,7 @@ export default function StudentDashboard() {
           { to: "/student/classrooms", label: "Classrooms" },
           { to: "/student/floor-map", label: "Floor Map" },
           { to: "/student/notifications", label: "Notifications" },
+          { to: "/student/cameras", label: "Camera Monitoring" }, // ⚡ New Link
         ]}
       />
 
