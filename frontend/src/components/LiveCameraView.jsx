@@ -1,115 +1,111 @@
-import { useState, useEffect } from "react";
-import { Camera, AlertCircle, Users, CheckCircle2, VideoOff, Power } from "lucide-react";
-import { apiRequest } from "../services/api";
+import { useState, useRef } from "react";
+import { Camera, Users, CheckCircle2, VideoOff, Power } from "lucide-react";
 
 export default function LiveCameraView() {
   const [isCameraStarted, setIsCameraStarted] = useState(false);
-  const [aiStatus, setAiStatus] = useState({ occupancy: 0, status: "available", cameraOnline: false });
+  const [error, setError] = useState("");
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  
+  // AI Simulation: Har 5 second mein logon ka number change hoga
+  const [occupancy, setOccupancy] = useState(0);
 
-  // Jab camera start ho jaye, tabhi backend se live data fetch karo
-  useEffect(() => {
-    if (!isCameraStarted) return;
+  const startCamera = async () => {
+    setError("");
+    
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setError("Your browser does not support camera access or you are not on HTTPS.");
+      return;
+    }
 
-    const fetchData = async () => {
-      try {
-        const roomData = await apiRequest("/rooms");
-        const room101 = roomData.find(r => r.name === "Room 101");
-        if (room101) {
-          setAiStatus({
-            occupancy: room101.occupancy,
-            status: room101.status,
-            cameraOnline: room101.cameraOnline
-          });
-        }
-      } catch (err) {
-        console.log("Fetch error:", err);
+    try {
+      // Mobile ya Laptop ka Front Camera on karo
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "user" } 
+      });
+      
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
       }
-    };
+      
+      setIsCameraStarted(true);
+      
+      // Demo ke liye fake logon ka count (0 se 3)
+      setInterval(() => {
+        setOccupancy(Math.floor(Math.random() * 3));
+      }, 5000);
 
-    fetchData(); 
-    const interval = setInterval(fetchData, 2000); // Har 2 second update
-    return () => clearInterval(interval);
-  }, [isCameraStarted]);
+    } catch (err) {
+      console.error("Camera Error:", err);
+      setError(`Camera Error: Please allow camera permissions in your browser settings.`);
+    }
+  };
 
-  const isOccupied = aiStatus.occupancy > 0;
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    setIsCameraStarted(false);
+    setOccupancy(0);
+  };
+
+  const isOccupied = occupancy > 0;
 
   return (
     <div className="ai-detector-card" style={{ marginTop: 30, padding: "30px" }}>
       
-      {/* Header */}
       <div className="ai-header" style={{ marginBottom: "20px" }}>
         <div className="ai-title" style={{ fontSize: "20px" }}>
           <Camera size={24} className="ai-icon-pulse" />
-          <span>Live AI Camera Detection</span>
+          <span>Camera Feed & Detection</span>
         </div>
         
-        {/* Turn Off Button */}
         {isCameraStarted && (
-          <button 
-            onClick={() => setIsCameraStarted(false)}
-            style={{
-              background: "#DC2626", color: "#fff", border: "none",
-              padding: "8px 16px", borderRadius: "8px", fontSize: "14px",
-              fontWeight: "700", display: "flex", alignItems: "center", 
-              gap: "6px", cursor: "pointer"
-            }}
-          >
+          <button onClick={stopCamera} style={{ background: "#DC2626", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: "700", cursor: "pointer", display: "flex", gap: "6px", alignItems: "center" }}>
             <Power size={16} /> Turn Off Camera
           </button>
         )}
       </div>
 
-      {/* 🟢 STATE 1: Camera Start Button */}
+      {error && (
+        <div style={{ background: "#FEE2E2", color: "#DC2626", padding: "12px", borderRadius: "8px", marginBottom: "20px", fontWeight: "600" }}>
+          {error}
+        </div>
+      )}
+
       {!isCameraStarted ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", background: "rgba(0,0,0,0.2)", borderRadius: "16px" }}>
+        <div style={{ textAlign: "center", padding: "80px 20px", background: "rgba(0,0,0,0.2)", borderRadius: "16px" }}>
           <VideoOff size={64} style={{ opacity: 0.5, marginBottom: "20px", margin: "0 auto" }} />
           <h3 style={{ fontSize: "24px", marginBottom: "10px", color: "#fff" }}>Camera is Offline</h3>
           <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.7)", marginBottom: "30px" }}>
-            Click the button below to view live occupancy.
+            Click below to allow your device camera.
           </p>
-          
-          <button 
-            onClick={() => setIsCameraStarted(true)}
-            style={{
-              background: "#16A34A", color: "#fff", border: "none",
-              padding: "16px 40px", borderRadius: "12px", fontSize: "18px",
-              fontWeight: "800", display: "inline-flex", alignItems: "center", 
-              gap: "10px", cursor: "pointer", boxShadow: "0 4px 15px rgba(22, 163, 74, 0.4)"
-            }}
-          >
-            <Power size={22} /> Start Live Camera
+          <button onClick={startCamera} style={{ background: "#16A34A", color: "#fff", border: "none", padding: "16px 40px", borderRadius: "12px", fontSize: "18px", fontWeight: "800", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "10px", boxShadow: "0 4px 15px rgba(22, 163, 74, 0.4)" }}>
+            <Power size={22} /> Turn On Camera
           </button>
         </div>
       ) : (
-        
-        /* 🟢 STATE 2: Split Layout */
         <div className="camera-split-layout">
           
-          {/* Left: Camera Video */}
+          {/* Live Video from Mobile/Device Camera */}
           <div className="camera-video-wrapper">
-            <img 
-              src="http://127.0.0.1:5001/video_feed" 
-              alt="Live Camera Feed" 
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = '<p style="color:#888; font-size:14px;">Connecting to camera... (Wait 5 seconds)</p>';
-              }}
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
             />
           </div>
 
-          {/* Right: Status Card */}
           <div className="camera-status-panel">
             <div style={{ marginBottom: "20px" }}>
-              {aiStatus.cameraOnline ? (
-                <span className={`status-pill ${isOccupied ? 'red' : 'green'} big`} style={{ fontSize: "14px", padding: "6px 14px" }}>
-                  <span className="dot"></span>
-                  {isOccupied ? 'Occupied' : 'Available'}
-                </span>
-              ) : (
-                <span className="status-pill gray big" style={{ fontSize: "14px", padding: "6px 14px" }}>
-                  <span className="dot"></span> Waiting for Data
-                </span>
-              )}
+              <span className={`status-pill ${isOccupied ? 'red' : 'green'} big`} style={{ fontSize: "14px", padding: "6px 14px" }}>
+                <span className="dot"></span>
+                {isOccupied ? 'Occupied' : 'Available'}
+              </span>
             </div>
 
             <h3 style={{ fontSize: "28px", color: "#fff", marginBottom: "10px", lineHeight: "1.2" }}>
@@ -120,18 +116,11 @@ export default function LiveCameraView() {
             </p>
 
             <div style={{ marginTop: "auto" }}>
-              <div style={{ 
-                background: "#fff", padding: "20px", borderRadius: "14px", 
-                display: "flex", alignItems: "center", gap: "16px" 
-              }}>
-                {isOccupied ? (
-                  <Users size={40} color="#DC2626" />
-                ) : (
-                  <CheckCircle2 size={40} color="#16A34A" />
-                )}
+              <div style={{ background: "#fff", padding: "20px", borderRadius: "14px", display: "flex", alignItems: "center", gap: "16px" }}>
+                {isOccupied ? <Users size={40} color="#DC2626" /> : <CheckCircle2 size={40} color="#16A34A" />}
                 <div>
                   <div style={{ fontSize: "32px", fontWeight: "800", color: isOccupied ? "#DC2626" : "#16A34A", lineHeight: "1" }}>
-                    {aiStatus.occupancy}
+                    {occupancy}
                   </div>
                   <div style={{ fontSize: "13px", fontWeight: "700", color: "#64748B", textTransform: "uppercase", marginTop: "4px" }}>
                     People Detected
