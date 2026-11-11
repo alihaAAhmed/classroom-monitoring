@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Camera, Users, CheckCircle2, VideoOff, Power } from "lucide-react";
 
 export default function LiveCameraView() {
@@ -6,9 +6,24 @@ export default function LiveCameraView() {
   const [error, setError] = useState("");
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  
-  // AI Simulation: Har 5 second mein logon ka number change hoga
   const [occupancy, setOccupancy] = useState(0);
+
+  // Ye useEffect tab chalega jab camera start hoga aur stream aayegi
+  useEffect(() => {
+    if (isCameraStarted && videoRef.current && streamRef.current) {
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      video.setAttribute("playsinline", "true");
+      
+      // Mobile browsers mein video play karne ka sahi tarika
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.error("Video play failed:", error);
+        });
+      }
+    }
+  }, [isCameraStarted]);
 
   const startCamera = async () => {
     setError("");
@@ -19,27 +34,22 @@ export default function LiveCameraView() {
     }
 
     try {
-      // Mobile ya Laptop ka Front Camera on karo
+      // Camera stream request karo
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: "user" } 
       });
       
       streamRef.current = stream;
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      
       setIsCameraStarted(true);
       
-      // Demo ke liye fake logon ka count (0 se 3)
+      // Simulated AI count (0 to 3)
       setInterval(() => {
         setOccupancy(Math.floor(Math.random() * 3));
       }, 5000);
 
     } catch (err) {
       console.error("Camera Error:", err);
-      setError(`Camera Error: Please allow camera permissions in your browser settings.`);
+      setError(`Camera Error: ${err.message}. Please allow permissions.`);
     }
   };
 
@@ -89,7 +99,6 @@ export default function LiveCameraView() {
       ) : (
         <div className="camera-split-layout">
           
-          {/* Live Video from Mobile/Device Camera */}
           <div className="camera-video-wrapper">
             <video 
               ref={videoRef} 
